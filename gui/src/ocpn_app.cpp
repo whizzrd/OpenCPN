@@ -1187,6 +1187,7 @@ bool MyApp::OnInit() {
   //      Establish location and name of chart database
   ChartListFileName = newPrivateFileName(g_Platform->GetPrivateDataDir(),
                                          "chartlist.dat", "CHRTLIST.DAT");
+  wxLogMessage("ChartListFileName is %s", ChartListFileName);
 
   //      Establish location and name of AIS MMSI -> Target Name mapping
   AISTargetNameFileName = newPrivateFileName(g_Platform->GetPrivateDataDir(),

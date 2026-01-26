@@ -4616,7 +4616,11 @@ void glChartCanvas::RenderSingleMBTileOverlay(const int dbIndex, bool bOverlay,
 
   // Is tile an OVERLAY type?
   // Render, or not, depending on passed flag.
-  if (bOverlay && pcmbt->GetTileType() != MbTilesType::OVERLAY) return;
+  if (bOverlay && pcmbt->GetTileType() != MbTilesType::OVERLAY) {
+    wxLogMessage("mbtiles RenderSingleOverlay: skip non-overlay db=%d",
+                 dbIndex);
+    return;
+  }
 
   wxFileName tileFile(chart->GetFullPath());
   // Size test for 5 GByte
@@ -4628,6 +4632,7 @@ void glChartCanvas::RenderSingleMBTileOverlay(const int dbIndex, bool bOverlay,
     // If so, do not add to no-show array again.
     if (!m_pParentCanvas->IsTileOverlayIndexInYesShow(dbIndex)) {
       if (!m_pParentCanvas->IsTileOverlayIndexInNoShow(dbIndex)) {
+        wxLogMessage("mbtiles RenderSingleOverlay: add NoShow db=%d", dbIndex);
         m_pParentCanvas->m_tile_noshow_index_array.push_back(dbIndex);
       }
     }
@@ -4636,9 +4641,12 @@ void glChartCanvas::RenderSingleMBTileOverlay(const int dbIndex, bool bOverlay,
   // This test catches the case where the chart is added to no_show list
   // when first loaded by OpenChartFromDBAndLock
   if (m_pParentCanvas->IsTileOverlayIndexInNoShow(dbIndex)) {
+    wxLogMessage("mbtiles RenderSingleOverlay: NoShow db=%d", dbIndex);
     return;
   }
 
+  wxLogMessage("mbtiles RenderSingleOverlay: render db=%d overlay=%d", dbIndex,
+               bOverlay);
   pcmbt->RenderRegionViewOnGL(*m_pcontext, vp, screen_region, screenLLRegion);
 
   // Light up the piano key if the chart was rendered

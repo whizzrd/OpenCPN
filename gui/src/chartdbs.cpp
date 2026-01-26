@@ -1968,6 +1968,11 @@ int ChartDatabase::TraverseDirAndAddCharts(ChartDirInfo &dir_info,
     b_dirchange = DetectDirChange(dir_path, dir_info.fullpath, old_magic,
                                   new_magic, pprog);
 
+  wxLogMessage(
+      wxString::Format("TraverseDirAndAddCharts: dir=%s force=%d dirchange=%d "
+                       "old_magic=%s new_magic=%s",
+                       dir_path, bForce, b_dirchange, old_magic, new_magic));
+
   if (!bForce && !b_dirchange) {
     wxString msg("   No change detected on directory ");
     msg.Append(dir_path);
@@ -2069,10 +2074,11 @@ bool ChartDatabase::DetectDirChange(const wxString &dir_path,
   new_magic = nacc.ToString();
 
   //    And do the test
-  if (new_magic != magic)
-    return true;
-  else
-    return false;
+  const bool changed = (new_magic != magic);
+  wxLogMessage(wxString::Format(
+      "DetectDirChange: dir=%s files=%d old_magic=%s new_magic=%s changed=%d",
+      dir_path, n_files, magic, new_magic, changed));
+  return changed;
 }
 
 bool ChartDatabase::IsChartDirUsed(const wxString &theDir) {

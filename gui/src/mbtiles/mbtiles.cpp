@@ -376,7 +376,13 @@ InitReturn ChartMbTiles::Init(const wxString& name, ChartInitFlag init_flags) {
     }
   } catch (std::exception& e) {
     const char* t = e.what();
-    wxLogMessage("mbtiles exception: %s", e.what());
+    wxFileName fn(name);
+    unsigned long long file_size = fn.GetSize().GetValue();
+    wxLogMessage(
+        "mbtiles exception: %s (path=%s exists=%d readable=%d size=%llu "
+        "errno=%d:%s)",
+        e.what(), name, fn.FileExists(), fn.IsFileReadable(), file_size, errno,
+        strerror(errno));
     return INIT_FAIL_REMOVE;
   }
 
@@ -495,7 +501,13 @@ InitReturn ChartMbTiles::Init(const wxString& name, ChartInitFlag init_flags) {
     }  // while
   } catch (std::exception& e) {
     const char* t = e.what();
-    wxLogMessage("mbtiles exception: %s", e.what());
+    wxFileName fn(name);
+    unsigned long long file_size = fn.GetSize().GetValue();
+    wxLogMessage(
+        "mbtiles exception: %s (path=%s exists=%d readable=%d size=%llu "
+        "errno=%d:%s)",
+        e.what(), name, fn.FileExists(), fn.IsFileReadable(), file_size, errno,
+        strerror(errno));
     return INIT_FAIL_REMOVE;
   }
 
@@ -558,7 +570,13 @@ InitReturn ChartMbTiles::PostInit() {
     m_db->exec("PRAGMA cache_size=-10000");
   } catch (std::exception& e) {
     const char* t = e.what();
-    wxLogMessage("mbtiles exception: %s", e.what());
+    wxFileName fn(m_FullPath);
+    unsigned long long file_size = fn.GetSize().GetValue();
+    wxLogMessage(
+        "mbtiles exception: %s (path=%s exists=%d readable=%d size=%llu "
+        "errno=%d:%s)",
+        e.what(), m_FullPath, fn.FileExists(), fn.IsFileReadable(), file_size,
+        errno, strerror(errno));
     return INIT_FAIL_REMOVE;
   }
 
@@ -602,7 +620,11 @@ bool ChartMbTiles::RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint) {
 }
 
 bool ChartMbTiles::GetTileTexture(SharedTilePtr tile) {
-  if (!m_db) return false;
+  if (!m_db) {
+    wxLogMessage("mbtiles GetTileTexture: no db (zoom=%d x=%d y=%d)",
+                 tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y);
+    return false;
+  }
   m_tile_count++;
   // Is the texture ready to be rendered ?
   if (tile->m_gl_texture_name > 0) {
@@ -611,6 +633,8 @@ bool ChartMbTiles::GetTileTexture(SharedTilePtr tile) {
     return true;
   } else if (!tile->m_is_available) {
     // Tile is not in MbTiles file : no texture to render
+    wxLogMessage("mbtiles GetTileTexture: not available (zoom=%d x=%d y=%d)",
+                 tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y);
     return false;
   } else if (tile->m_teximage == 0) {
     // Throttle the worker thread
@@ -620,6 +644,8 @@ bool ChartMbTiles::GetTileTexture(SharedTilePtr tile) {
       if (tile->m_requested == false) {
         // The tile has not been loaded and decompressed yet : request it
         // to the worker thread
+        wxLogMessage("mbtiles GetTileTexture: request tile zoom=%d x=%d y=%d",
+                     tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y);
         m_worker_thread->RequestTile(tile);
       }
     }
@@ -630,6 +656,8 @@ bool ChartMbTiles::GetTileTexture(SharedTilePtr tile) {
 #ifndef __ANDROID__
     glEnable(GL_COLOR_MATERIAL);
 #endif
+    wxLogMessage("mbtiles GetTileTexture: upload tile zoom=%d x=%d y=%d",
+                 tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y);
     glGenTextures(1, &tile->m_gl_texture_name);
     glBindTexture(GL_TEXTURE_2D, tile->m_gl_texture_name);
 

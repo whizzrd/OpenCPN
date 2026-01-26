@@ -98,6 +98,9 @@ void MbtTilesThread::LoadTile(SharedTilePtr tile) {
 
     int queryResult = query.tryExecuteStep();
     if (SQLITE_DONE == queryResult) {
+      wxLogMessage(
+          "mbtiles tile missing: zoom=%d x=%d y=%d (no row in tiles table)",
+          tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y);
       // The tile has not been found in databse, mark it as "not available" so
       // that we won't try to find it again later
       tile->m_is_available = false;
@@ -108,6 +111,8 @@ void MbtTilesThread::LoadTile(SharedTilePtr tile) {
       const void* blob = blobColumn.getBlob();
       // Get the length
       int length = query.getColumn(1);
+      wxLogMessage("mbtiles tile load: zoom=%d x=%d y=%d bytes=%d",
+                   tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y, length);
 
       // Uncompress the tile
       wxMemoryInputStream blobStream(blob, length);
@@ -125,6 +130,9 @@ void MbtTilesThread::LoadTile(SharedTilePtr tile) {
           blobImage.Rescale(256, 256, wxIMAGE_QUALITY_NORMAL);
         imgdata = blobImage.GetData();
       } else {
+        wxLogMessage("mbtiles tile decode failed: zoom=%d x=%d y=%d bytes=%d",
+                     tile->m_zoom_level, tile->m_tile_x, tile->m_tile_y,
+                     length);
         // wxWidget can't uncompress the tile : mark it as not available and
         // exit
         tile->m_is_available = false;
