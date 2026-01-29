@@ -27,7 +27,6 @@
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
-
 #include "config.h"
 #include "toolbar.h"
 
@@ -423,7 +422,7 @@ void ocpnFloatingToolbarDialog::SetGeometry(bool bAvoid, wxRect rectAvoid) {
   }
 }
 
-void ocpnFloatingToolbarDialog::SetDefaultPosition() {
+void ocpnFloatingToolbarDialog::SetDefaultPosition(bool record) {
   if (m_block) return;
 
   if (m_pparent && m_ptoolbar) {
@@ -446,26 +445,30 @@ void ocpnFloatingToolbarDialog::SetDefaultPosition() {
 
     m_position.y += m_auxOffsetY;
 
-    g_maintoolbar_x = m_position.x;
-    g_maintoolbar_y = m_position.y;
-
-    // take care of left docked instrument windows and don't blast the main
-    // toolbar on top of them, hinding instruments this positions the main
-    // toolbar directly right of the left docked instruments onto the chart
-    //        wxPoint screen_pos = m_pparent->ClientToScreen( m_position );
-    // wxPoint screen_pos =
-    // gFrame->GetPrimaryCanvas()->ClientToScreen(m_position);
-
-    //  GTK sometimes has trouble with ClientToScreen() if executed in the
-    //  context of an event handler The position of the window is calculated
-    //  incorrectly if a deferred Move() has not been processed yet. So work
-    //  around this here... Discovered with a Dashboard window left-docked,
-    //  toggled on and off by toolbar tool.
-
-    //  But this causes another problem. If a toolbar is NOT left docked, it
-    //  will walk left by two pixels on each call to Reposition().
-    // TODO
+    if (record) {
+      g_maintoolbar_x = m_position.x;
+      g_maintoolbar_y = m_position.y;
+    }
   }
+}
+
+bool ocpnFloatingToolbarDialog::RestoreRelativePosition(int x, int y) {
+  if (!m_pparent || !m_ptoolbar) return false;
+
+  wxSize cs = m_pparent->GetClientSize();
+  if ((cs.x <= 0) || (cs.y <= 0)) return false;
+
+  int maxX = wxMax(cs.x - m_ptoolbar->m_maxWidth, m_dock_min_x);
+  int maxY = wxMax(cs.y - m_ptoolbar->m_maxHeight, m_dock_min_y);
+  int targetX = wxMin(wxMax(x, m_dock_min_x), maxX);
+  int targetY = wxMin(wxMax(y, m_dock_min_y), maxY);
+
+  m_position.x = targetX;
+  m_position.y = targetY + m_auxOffsetY;
+
+  g_maintoolbar_x = m_position.x;
+  g_maintoolbar_y = m_position.y;
+  return true;
 }
 
 void ocpnFloatingToolbarDialog::Submerge() {

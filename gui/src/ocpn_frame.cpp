@@ -6840,7 +6840,7 @@ void MyFrame::RequestNewMasterToolbar(bool bforcenew) {
     g_MainToolbar->EnableRolloverBitmaps(false);
 
     g_MainToolbar->CreateConfigMenu();
-    g_MainToolbar->SetDefaultPosition();
+    g_MainToolbar->SetDefaultPosition(false);
 
     g_bmasterToolbarFull = true;
   }
@@ -6848,8 +6848,9 @@ void MyFrame::RequestNewMasterToolbar(bool bforcenew) {
   if (g_MainToolbar) {
     CreateMasterToolbar();
     {
-      // g_MainToolbar->RestoreRelativePosition(g_maintoolbar_x,
-      // g_maintoolbar_y);
+      bool restored = g_MainToolbar->RestoreRelativePosition(g_maintoolbar_x,
+                                                             g_maintoolbar_y);
+      if (!restored) g_MainToolbar->SetDefaultPosition();
       g_MainToolbar->SetColorScheme(global_color_scheme);
       // g_MainToolbar->Show(b_reshow && g_bshowToolbar);
     }
